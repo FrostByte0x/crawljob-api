@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log/slog"
 	"net/url"
 	"os"
 	"slices"
@@ -11,6 +12,9 @@ import (
 func ValidateUrl(requestedUrl string) error {
 	// load list of valid domains to download files
 	allowedDomains := strings.Split(os.Getenv("ALLOWED_DOMAINS"), ",")
+	if allowedDomains == nil {
+		slog.Warn("ALLOWED_DOMAINS is empty, all downloads will be rejected!")
+	}
 	// Parse the URL
 	parsedUrl, err := url.Parse(requestedUrl)
 	if err != nil {
