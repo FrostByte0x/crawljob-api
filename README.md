@@ -1,3 +1,5 @@
+[![Build and Push Docker image](https://github.com/FrostByte0x/crawljob-api/actions/workflows/docker.yml/badge.svg?event=push)](https://github.com/FrostByte0x/crawljob-api/actions/workflows/docker.yml)
+
 # crawljob-api
 
 A lightweight REST API written in Go that generates `.crawljob` files for [JDownloader](https://jdownloader.org/). Drop a download URL, get a crawljob file picked up automatically by JDownloader.
