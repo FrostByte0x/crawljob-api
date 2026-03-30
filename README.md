@@ -95,7 +95,8 @@ crawljob-api/
 ├── main.go           # Server entrypoint
 ├── handler/
 │   ├── job.go        # HTTP handler
-│   └── validator.go  # URL validation
+│   ├── validator.go  # URL validation
+│   └── ui.go         # HTTP handler for / (web interface)
 ├── model/
 │   ├── crawljob.go   # CrawlJob model + file generation
 │   └── utils.go      # Helpers
