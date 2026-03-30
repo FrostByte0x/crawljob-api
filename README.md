@@ -45,7 +45,7 @@ go run main.go
 |---|---|---|
 | `DESTINATION_FOLDER` | Download destination folder | `.` (current dir) |
 | `CRAWLJOB_FOLDER` | Folder watched by JDownloader | `.` (current dir) |
-
+| `ALLOWED_DOMAINS` | Allowed download domains | 1fichier.com,mega.nz | 
 ---
 
 ## API Reference
@@ -54,7 +54,7 @@ go run main.go
 
 Submit a download URL.
 
-**Request**
+**Request Body**
 ```json
 {
   "url": "https://1fichier.com/yourfile"
@@ -72,7 +72,7 @@ Submit a download URL.
 ---
 
 ## Allowed Domains
-This can be changed in the Dockerfile configuration 
+This can be changed in the Dockerfile configuration using ALLOWED_DOMAINS
 
 Currently restricted to:
 - `1fichier.com`
