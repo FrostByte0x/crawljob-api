@@ -5,6 +5,10 @@ A lightweight REST API written in Go that generates `.crawljob` files for [JDown
 Built to run as a Docker container.
 
 ---
+## Note
+This is my first Go project, done for fun and learning.
+
+--- 
 
 ## How it works
 
