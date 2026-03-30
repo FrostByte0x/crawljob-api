@@ -11,6 +11,8 @@ Built to run as a Docker container.
 This is my first Go project, done for fun and learning.
 
 --- 
+## Web Interface
+A web interface is available at /. It offers a simple text field and one click action to start the download. The purpose of this project is to write the API, not create web interfaces.
 
 ## How it works
 
@@ -32,7 +34,7 @@ docker run -d \
   -e CRAWLJOB_FOLDER=/mnt/crawljobs \
   -v /your/download/path:/mnt/downloads \
   -v /your/crawljob/path:/mnt/crawljobs \
-  frostbyte0x/crawljob-api:latest
+  ghcr.io/frostbyte0x/crawljob-api:latest
 ```
 
 ### Build locally
