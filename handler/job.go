@@ -56,14 +56,15 @@ func Handle(writer http.ResponseWriter, request *http.Request) {
 
 	// This will be taken from DOCKER configuration
 	destinationFolder := os.Getenv("DESTINATION_FOLDER")
+	slog.Info("destinationFolder", "value", destinationFolder)
 	// if the variable is not found, use a default for now
-	if destinationFolder == "" {
-		slog.Warn("DESTINATION_FOLDER is not set, using fallback to current directory")
-		destinationFolder = "." // current running directory
-	} else if _, err := os.Stat(destinationFolder); os.IsNotExist(err) {
-		slog.Warn("DESTINATION_FOLDER does not exist, using fallback to current directory")
-		destinationFolder = "." // current running directory
-	}
+	// if destinationFolder == "" {
+	// 	slog.Warn("DESTINATION_FOLDER is not set, using fallback to current directory")
+	// 	destinationFolder = "." // current running directory
+	// } else if _, err := os.Stat(destinationFolder); os.IsNotExist(err) {
+	// 	slog.Warn("DESTINATION_FOLDER does not exist, using fallback to current directory")
+	// 	destinationFolder = "." // current running directory
+	// }
 	destinationFileJob := os.Getenv("CRAWLJOB_FOLDER")
 	if destinationFileJob == "" {
 		slog.Warn("CRAWLJOB_FOLDER is not set, using fallback to current directory")
