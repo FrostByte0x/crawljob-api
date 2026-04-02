@@ -1,11 +1,11 @@
 package model
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type CrawlJob struct {
@@ -45,8 +45,7 @@ func GenerateJobFile(url, destinationFolder, fileDestination string) error {
 	lines = append(lines, fmt.Sprintf("overwritePackagizerEnabled=%s", booltoString(jobFile.OverwritePackagizerEnabled)))
 
 	fileContent := strings.Join(lines, "\n")
-	nameHash := sha256.Sum256([]byte(fileContent))
-	fileName := fmt.Sprintf("%x", nameHash)[:16] + ".crawljob"
+	fileName := string(time.Now().Format("20060102150405")) + ".crawljob"
 	// add the file name and the folder in which we drop the crawljobs to be picked up
 	filePath := filepath.Join(fileDestination, fileName)
 
