@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>crawljob-api — downloads</title>
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0c0f;
+      --surface:   #111418;
+      --surface2:  #161b22;
+      --border:    #1e2530;
+      --accent:    #00e5a0;
+      --accent-dim:#00e5a018;
+      --accent-btn:#00e5a0;
+      --danger:    #ff4d6d;
+      --text:      #e2e8f0;
+      --muted:     #4a5568;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'Syne', sans-serif;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -20%; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, #00e5a012 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: min(1100px, 92vw);
+      margin: 0 auto;
+      padding: 3rem 0 4rem;
+    }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+    }
+
+    .logo {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo::before {
+      content: '';
+      display: block;
+      width: 1.5rem; height: 1px;
+      background: var(--accent);
+      opacity: 0.5;
+    }
+
+    .nav-link {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .nav-link:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+
+    /* ── Header ── */
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.4rem;
+    }
+    h1 span { color: var(--accent); }
+
+    .subtitle {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .search-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--text);
+      outline: none;
+      flex: 1;
+      max-width: 360px;
+      transition: border-color 0.2s;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--accent); }
+
+    .file-count {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+    .file-count span { color: var(--accent); }
+
+    .refresh-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .table-wrap::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.5;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+      padding: 0.9rem 1.25rem;
+      text-align: left;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    thead th:last-child { text-align: right; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--accent-dim); }
+
+    tbody td {
+      padding: 0.85rem 1.25rem;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    tbody td:last-child { text-align: right; }
+
+    /* ── Name cell ── */
+    .name-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      max-width: 500px;
+    }
+
+    .name-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Type badge ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .badge-dir  { background: #1e2a3a; color: #60a5fa; border: 1px solid #1d4ed855; }
+    .badge-file { background: #1a2e22; color: var(--accent); border: 1px solid var(--accent-dim); }
+
+    /* ── Extension tag ── */
+    .ext {
+      font-size: 0.65rem;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .size { color: var(--muted); }
+
+    /* ── Download button ── */
+    .dl-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.9rem;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .dl-btn:hover {
+      background: var(--accent);
+      color: #0a0c0f;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--accent-dim);
+    }
+
+    .dl-btn:active { transform: translateY(0); }
+
+    /* ── States ── */
+    .state-row td {
+      text-align: center;
+      padding: 3rem;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 2rem;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+
+<body>
+  <div class="page"
+    x-data="{
+      files: [],
+      loading: true,
+      error: null,
+      search: '',
+      get filtered() {
+        if (!this.search) return this.files;
+        const q = this.search.toLowerCase();
+        return this.files.filter(f => f.Name.toLowerCase().includes(q));
+      },
+      async load() {
+        this.loading = true;
+        this.error = null;
+        try {
+          const res = await fetch('/api/files');
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          this.files = await res.json();
+        } catch(e) {
+          this.error = e.message;
+        } finally {
+          this.loading = false;
+        }
+      },
+      downloadUrl(name) {
+        return '/download?filename=' + encodeURIComponent(name);
+      }
+    }"
+    x-init="load()"
+  >
+
+    <nav>
+      <div class="logo">crawljob-api</div>
+      <a href="/" class="nav-link">← back to submit</a>
+    </nav>
+
+    <h1>Download <span>library</span></h1>
+    <p class="subtitle">// contents of DESTINATION_FOLDER</p>
+
+    <div class="toolbar">
+      <input
+        class="search-input"
+        type="text"
+        placeholder="filter files..."
+        x-model="search"
+      />
+      <span class="file-count" x-show="!loading && !error">
+        <span x-text="filtered.length"></span> item(s)
+      </span>
+      <button class="refresh-btn" @click="load()" :disabled="loading">↻ refresh</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>name</th>
+            <th>type</th>
+            <th>size</th>
+            <th>action</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- Loading -->
+          <tr class="state-row" x-show="loading">
+            <td colspan="4"><span class="spinner"></span> loading files...</td>
+          </tr>
+
+          <!-- Error -->
+          <tr class="state-row" x-show="!loading && error" x-cloak>
+            <td colspan="4" style="color: var(--danger)">✗ <span x-text="error"></span></td>
+          </tr>
+
+          <!-- Empty -->
+          <tr class="state-row" x-show="!loading && !error && filtered.length === 0" x-cloak>
+            <td colspan="4">no files found</td>
+          </tr>
+
+          <!-- Rows -->
+          <template x-if="!loading && !error" x-cloak>
+            <template x-for="file in filtered" :key="file.Name">
+              <tr>
+                <!-- Name -->
+                <td>
+                  <div class="name-cell">
+                    <span class="name-text" x-text="file.Name"></span>
+                    <span class="ext" x-show="file.Type === 'file'" x-text="file.Extension"></span>
+                  </div>
+                </td>
+
+                <!-- Type badge -->
+                <td>
+                  <span class="badge" :class="file.Type === 'dir' ? 'badge-dir' : 'badge-file'"
+                    x-text="file.Type === 'dir' ? '📁 dir' : '⬇ file'">
+                  </span>
+                </td>
+
+                <!-- Size — hidden for dirs -->
+                <td class="size">
+                  <span x-show="file.Type === 'file'" x-text="file.Size"></span>
+                  <span x-show="file.Type === 'dir'" style="color: var(--border)">—</span>
+                </td>
+
+                <!-- Download button — only for files -->
+                <td>
+                  <a
+                    x-show="file.Type === 'file'"
+                    :href="downloadUrl(file.Name)"
+                    class="dl-btn"
+                  >
+                    ⬇ download
+                  </a>
+                  <span x-show="file.Type === 'dir'" style="color: var(--border); font-family: var(--mono); font-size: 0.7rem;">—</span>
+                </td>
+              </tr>
+            </template>
+          </template>
+
+        </tbody>
+      </table>
+    </div>
+
+    <footer>
+      <a href="https://github.com/FrostByte0x/crawljob-api" target="_blank">github.com/FrostByte0x/crawljob-api</a>
+    </footer>
+  </div>
+
+  <style>[x-cloak] { display: none !important; }</style>
+</body>
+</html>

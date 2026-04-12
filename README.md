@@ -6,13 +6,11 @@ A lightweight REST API written in Go that generates `.crawljob` files for [JDown
 
 Built to run as a Docker container.
 
----
-## Note
-This is my first Go project, done for fun and learning.
-
 --- 
 ## Web Interface
-A web interface is available at /. It offers a simple text field and one click action to start the download. The purpose of this project is to write the API, not create web interfaces.
+A web interface is available at `/` and `/downloads`. It offers a simple text field and one-click action to submit a download URL. The `/downloads` page lists all files in the download directory and lets you download them directly from the browser.
+
+HTML and CSS courtesy of Claude; the purpose of this project is to write the API, not create web interfaces.
 
 ## How it works
 
@@ -20,7 +18,8 @@ A web interface is available at /. It offers a simple text field and one click a
 2. The API validates the URL (scheme, allowed domains)
 3. A `.crawljob` file is generated and dropped into a watched folder
 4. JDownloader picks it up and starts the download automatically
-
+5. Query `GET /api/files` to list completed downloads
+6. Retrieve a specific file with `GET /download?filename=<name>`
 ---
 
 ## Getting Started
@@ -38,7 +37,7 @@ docker run -d \
 ```
 
 ### Build locally
-
+This will start the web server on port 8080
 ```bash
 git clone https://github.com/FrostByte0x/crawljob-api
 cd crawljob-api
@@ -79,6 +78,57 @@ Submit a download URL.
 
 ---
 
+### `GET /api/files`
+
+List all files and directories in the download folder.
+
+**Response Body**
+```json
+[
+  {
+    "Name": "movie.mkv",
+    "Type": "file",
+    "Extension": ".MKV",
+    "Size": "4.2 GB"
+  },
+  {
+    "Name": "archive",
+    "Type": "dir",
+    "Extension": "DIR",
+    "Size": "0 B"
+  }
+]
+```
+
+**Responses**
+
+| Code | Description |
+|---|---|
+| `200 OK` | JSON array of files returned |
+| `403 Forbidden` | Download folder cannot be accessed |
+
+---
+
+### `GET /download?filename=<name>`
+
+Stream a file from the download folder to the client.
+
+**Query Parameters**
+
+| Parameter | Description |
+|---|---|
+| `filename` | Name of the file to download (must be within the download directory) |
+
+**Responses**
+
+| Code | Description |
+|---|---|
+| `200 OK` | File streamed as attachment |
+| `403 Forbidden` | Path traversal attempt or folder inaccessible |
+| `404 Not Found` | No filename provided |
+
+---
+
 ## Allowed Domains
 This can be changed in the Dockerfile configuration using ALLOWED_DOMAINS
 
@@ -94,14 +144,16 @@ Currently restricted to:
 
 ```
 crawljob-api/
-├── main.go           # Server entrypoint
+├── main.go             # Server entrypoint
 ├── handler/
-│   ├── job.go        # HTTP handler
-│   ├── validator.go  # URL validation
-│   └── ui.go         # HTTP handler for / (web interface)
+│   ├── job.go          # HTTP handler
+│   ├── download_ui.go  # HTTP handler for /downloads (web interface)
+│   ├── validator.go    # URL validation
+│   ├── download.go     # API that returns a json array of files in the download directory
+│   └── ui.go           # HTTP handler for / (web interface)
 ├── model/
-│   ├── crawljob.go   # CrawlJob model + file generation
-│   └── utils.go      # Helpers
+│   ├── crawljob.go     # CrawlJob model + file generation
+│   └── utils.go        # Helpers
 └── Dockerfile
 ```
 

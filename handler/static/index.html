@@ -33,7 +33,6 @@
       overflow: hidden;
     }
 
-    /* ── Grid noise background ── */
     body::before {
       content: '';
       position: fixed; inset: 0;
@@ -46,7 +45,6 @@
       z-index: 0;
     }
 
-    /* ── Glow orb ── */
     body::after {
       content: '';
       position: fixed;
@@ -71,10 +69,57 @@
       gap: 2.5rem;
     }
 
-    /* ── Header ── */
-    header {
-      text-align: center;
+    /* ── Nav bar ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 2rem;
+      background: linear-gradient(to bottom, var(--bg) 60%, transparent);
     }
+
+    .nav-logo {
+      font-family: var(--mono);
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .nav-link {
+      font-family: var(--mono);
+      font-size: 1.44rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      padding: 0.8rem 1.8rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .nav-link:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .nav-link .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    /* ── Header ── */
+    header { text-align: center; }
 
     .logo {
       font-family: var(--mono);
@@ -106,9 +151,7 @@
       color: var(--text);
     }
 
-    h1 span {
-      color: var(--accent);
-    }
+    h1 span { color: var(--accent); }
 
     .subtitle {
       margin-top: 0.6rem;
@@ -128,7 +171,7 @@
       padding: 2rem;
       position: relative;
       overflow: hidden;
-      transition: border-color 0.3s;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
 
     .card::before {
@@ -140,10 +183,9 @@
       opacity: 0.6;
     }
 
-    /* ── Input group ── */
     .input-label {
       font-family: var(--mono);
-      font-size: 0.7rem;
+      font-size: 1.4rem;
       color: var(--accent);
       letter-spacing: 0.15em;
       text-transform: uppercase;
@@ -151,10 +193,7 @@
       display: block;
     }
 
-    .input-row {
-      display: flex;
-      gap: 0.75rem;
-    }
+    .input-row { display: flex; gap: 0.75rem; }
 
     input[type="url"] {
       flex: 1;
@@ -170,13 +209,11 @@
     }
 
     input[type="url"]::placeholder { color: var(--muted); }
-
     input[type="url"]:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 3px var(--accent-dim);
     }
 
-    /* ── Button ── */
     button[type="submit"] {
       background: var(--accent);
       color: #0a0c0f;
@@ -189,19 +226,12 @@
       cursor: pointer;
       white-space: nowrap;
       transition: opacity 0.2s, transform 0.15s;
-      position: relative;
-      overflow: hidden;
     }
 
     button[type="submit"]:hover  { opacity: 0.85; }
     button[type="submit"]:active { transform: scale(0.97); }
+    button[type="submit"]:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    button[type="submit"]:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    /* ── Status badge ── */
     .status {
       margin-top: 1.25rem;
       padding: 0.75rem 1rem;
@@ -211,58 +241,33 @@
       display: flex;
       align-items: center;
       gap: 0.6rem;
-      transition: all 0.3s;
     }
 
-    .status.success {
-      background: var(--accent-dim);
-      border: 1px solid var(--accent);
-      color: var(--accent);
-    }
+    .status.success { background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent); }
+    .status.error   { background: var(--danger-dim); border: 1px solid var(--danger);  color: var(--danger); }
 
-    .status.error {
-      background: var(--danger-dim);
-      border: 1px solid var(--danger);
-      color: var(--danger);
-    }
-
-    .status .dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
+    .status .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
     .status.success .dot { background: var(--accent); animation: pulse 1.5s infinite; }
     .status.error   .dot { background: var(--danger); }
+
+    .card.success-flash {
+      border-color: var(--accent);
+      box-shadow: 0 0 30px var(--accent-dim), 0 0 60px var(--accent-dim);
+    }
+    .card.error-flash {
+      border-color: var(--danger);
+      box-shadow: 0 0 30px var(--danger-dim);
+    }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50%       { opacity: 0.4; transform: scale(0.7); }
     }
 
-    /* ── Success ripple on card ── */
-    .card.success-flash {
-      border-color: var(--accent);
-      box-shadow: 0 0 30px var(--accent-dim), 0 0 60px var(--accent-dim);
-      animation: flash 0.8s ease forwards;
-    }
-
-    .card.error-flash {
-      border-color: var(--danger);
-      box-shadow: 0 0 30px var(--danger-dim);
-      animation: flash 0.8s ease forwards;
-    }
-
-    @keyframes flash {
-      0%   { opacity: 1; }
-      50%  { opacity: 0.85; }
-      100% { opacity: 1; }
-    }
-
     /* ── Footer ── */
     footer {
       font-family: var(--mono);
-      font-size: 0.7rem;
+      font-size: 1.4rem;
       color: var(--muted);
       letter-spacing: 0.08em;
     }
@@ -270,7 +275,6 @@
     footer a { color: var(--accent); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
 
-    /* ── Spinner in button ── */
     .spinner {
       display: inline-block;
       width: 12px; height: 12px;
@@ -281,13 +285,21 @@
       vertical-align: middle;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 
 <body>
+
+  <!-- ── Top navigation ── -->
+  <nav>
+    <span class="nav-logo">crawljob-api</span>
+    <a href="/downloads" class="nav-link">
+      <span class="dot"></span>
+      view downloads →
+    </a>
+  </nav>
+
   <main>
     <header>
       <div class="logo">crawljob-api</div>
