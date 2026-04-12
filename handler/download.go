@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"archive/zip"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,14 +13,24 @@ import (
 	"strings"
 )
 
-type file struct {
-	Name      string // file name, no extension
-	Type      string // directory or file
-	Extension string // used to display the extension: rar, mkv, etc.
-	Size      string // file size
+func getDestinationFolder() string {
+	folder := os.Getenv("DESTINATION_FOLDER")
+	if folder == "" {
+		return "/mnt/downloads"
+	}
+	return filepath.Clean(folder)
 }
 
-func ReturnExtension(s os.DirEntry) string {
+type FSEntry struct {
+	Name      string    `json:"name"`
+	Path      string    `json:"path"`
+	IsDir     bool      `json:"isDir"`
+	Size      string    `json:"size,omitempty"`
+	Extension string    `json:"extension,omitempty"`
+	Children  []FSEntry `json:"children,omitempty"`
+}
+
+func ReturnExtension(s fs.DirEntry) string {
 	if s.IsDir() {
 		return "DIR"
 	} else if filepath.Ext(s.Name()) != "" {
@@ -46,8 +59,7 @@ func FormatFileSize(size int64) string {
 	}
 }
 func HandleFiles(rw http.ResponseWriter, r *http.Request) {
-	// Load download folder from OS ENV
-	destinationFolder := filepath.Clean("/mnt/downloads") // This is the docker directory, not the OS
+	destinationFolder := getDestinationFolder()
 
 	slog.Info("destinationFolder", "value", destinationFolder)
 	// test the access to the directory
@@ -58,40 +70,49 @@ func HandleFiles(rw http.ResponseWriter, r *http.Request) {
 		slog.Warn("Unable to load DESTINATION_FOLDER files")
 		return
 	}
+	// Create a map to store folders and their files in it.
+	folders := make(map[string][]FSEntry)
+	// load files using walkPath to get all underlying elements
+	err := filepath.WalkDir(destinationFolder, func(path string, d fs.DirEntry, err error) error {
+		if path == destinationFolder {
+			// this is  the root folder, skip it
+			return nil
+		}
+		if d.IsDir() {
+			depth := strings.Count(strings.TrimPrefix(path, destinationFolder), string(filepath.Separator))
+			if depth > 1 {
+				return fs.SkipDir // do not go below 1 level in the tree.
+			}
+			folders[d.Name()] = []FSEntry{}
+			return nil
+		}
+		parentFolder := filepath.Base(filepath.Dir(path))
 
-	// load files here
-	items, err := os.ReadDir(destinationFolder)
+		fileInfo, err := d.Info()
+		if err != nil {
+			slog.Warn(err.Error())
+		}
+		relativePath, _ := filepath.Rel(destinationFolder, path)
+
+		folders[parentFolder] = append(folders[parentFolder], FSEntry{
+			Name:      d.Name(),
+			Path:      relativePath,
+			IsDir:     d.IsDir(),
+			Size:      FormatFileSize(fileInfo.Size()),
+			Extension: ReturnExtension(d),
+		})
+		return nil
+	})
 	if err != nil {
-		slog.Warn("DESTINATION_FOLDER files cannot be accessed")
-		rw.WriteHeader(http.StatusForbidden)
-		fmt.Fprintf(rw, "Unable to load directory %s", destinationFolder)
+		slog.Warn("Error retrieving directory files", "err", err)
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	// The json in which we marshal the slice of Files
-	var Files []file
-	// Create the json to return
-	for _, item := range items {
-		fileInfo, err := item.Info()
-		if err != nil {
-			slog.Warn("Error retrieving file information", "name", item.Name())
-		}
-		filetype := "file"
-		if fileInfo.IsDir() {
-			filetype = "dir"
-		}
-		f := file{
-			Name:      item.Name(),
-			Type:      filetype,
-			Extension: ReturnExtension(item),
-			Size:      FormatFileSize(fileInfo.Size()),
-		}
-		Files = append(Files, f)
 
-	}
-	// We now have Files, a slice of Files objects.
+	// We now have folders, a map of folders and their sub items.
 	// return the json list of files
 	rw.Header().Set("Content-Type", "application/json")
-	returnBody, err := json.Marshal(Files)
+	returnBody, err := json.Marshal(folders)
 	if err != nil {
 		slog.Warn(fmt.Sprintf("Error marshalling json: %s", err))
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -101,8 +122,9 @@ func HandleFiles(rw http.ResponseWriter, r *http.Request) {
 }
 
 func DownloadFiles(rw http.ResponseWriter, r *http.Request) {
-	// Load download folder from OS ENV
-	destinationFolder := filepath.Clean(os.Getenv("DESTINATION_FOLDER"))
+	destinationFolder := getDestinationFolder()
+
+	slog.Info("File Handler running", "destinationFolder", destinationFolder)
 	// test the access to the directory
 	if _, err := os.Stat(destinationFolder); os.IsNotExist(err) {
 		slog.Warn("DESTINATION_FOLDER cannot be accessed")
@@ -142,4 +164,76 @@ func DownloadFiles(rw http.ResponseWriter, r *http.Request) {
 	// stream the file to the client
 	rw.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(fullpath)+"\"")
 	http.ServeFile(rw, r, fullpath)
+}
+
+func DownloadFolder(rw http.ResponseWriter, r *http.Request) {
+	destinationFolder := getDestinationFolder()
+	slog.Info("Folder Handler running", "destinationFolder", destinationFolder)
+	// parse the request
+	err := r.ParseForm()
+	if err != nil {
+		slog.Warn("Error parsing request:")
+		rw.WriteHeader(http.StatusInternalServerError)
+		rw.Write([]byte(err.Error()))
+		return
+	}
+
+	archiveName := r.FormValue("folder")
+	slog.Info("Received request to download folder", "name", archiveName)
+
+	// build the path to the folder
+	FolderPath := filepath.Join(destinationFolder, archiveName)
+	// test the access to the directory
+	if _, err := os.Stat(FolderPath); os.IsNotExist(err) {
+		slog.Warn(FolderPath + "cannot be accessed")
+		rw.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(rw, "Unable to load directory %s", FolderPath)
+		return
+	}
+	// prevent path traversal
+	if !strings.HasPrefix(FolderPath, destinationFolder) {
+		rw.WriteHeader(http.StatusForbidden)
+		rw.Write([]byte("Access denied"))
+		return
+	}
+	rw.Header().Set("Content-Type", "application/zip")
+	rw.Header().Set("Content-Disposition",
+		"attachment; filename=\""+archiveName+".zip\"")
+	// Create the archive
+	zipWriter := zip.NewWriter(rw)
+	defer zipWriter.Close()
+	// Create a buffer for io.reader
+	buffer := make([]byte, 4*1024*1024) // 4 MB
+	filepath.WalkDir(FolderPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			slog.Warn("WalkDir error", "path", path, "err", err)
+			return err
+		}
+		if d.IsDir() {
+			return nil // les dossiers sont créés automatiquement par le zip
+		}
+
+		// relative path, which is name and structure in archives
+		relativePath, err := filepath.Rel(FolderPath, path)
+		if err != nil {
+			slog.Warn(err.Error())
+		}
+		// create the entry
+		zipEntry, err := zipWriter.CreateHeader(&zip.FileHeader{
+			Name:   relativePath,
+			Method: zip.Store,
+		})
+		if err != nil {
+			slog.Warn(err.Error())
+		}
+		// copy the file
+		f, err := os.Open(path)
+		if err != nil {
+			slog.Warn(err.Error())
+		}
+		defer f.Close()
+		io.CopyBuffer(zipEntry, f, buffer)
+
+		return nil
+	})
 }

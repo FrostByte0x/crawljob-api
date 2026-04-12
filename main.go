@@ -17,6 +17,8 @@ func main() {
 	http.HandleFunc("/downloads", handler.HandleDownloadUi)
 	// Download files
 	http.HandleFunc("/download", handler.DownloadFiles)
+	// download folders
+	http.HandleFunc("/download/folder", handler.DownloadFolder)
 	fmt.Println("Starting web server on :8080")
 	http.ListenAndServe(":8080", nil)
 }
