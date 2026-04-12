@@ -47,8 +47,8 @@ func FormatFileSize(size int64) string {
 }
 func HandleFiles(rw http.ResponseWriter, r *http.Request) {
 	// Load download folder from OS ENV
-	// destinationFolder := os.Getenv("DESTINATION_FOLDER")
-	destinationFolder := filepath.Clean(os.Getenv("DESTINATION_FOLDER"))
+	destinationFolder := filepath.Clean("/mnt/downloads") // This is the docker directory, not the OS
+
 	slog.Info("destinationFolder", "value", destinationFolder)
 	// test the access to the directory
 	if _, err := os.Stat(destinationFolder); os.IsNotExist(err) {
