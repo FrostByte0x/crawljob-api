@@ -8,7 +8,7 @@ import (
 //go:embed static/index.html
 var indexHTML []byte
 
-func HandleUI(w http.ResponseWriter, request *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	w.Write(indexHTML)
+func HandleUI(rw http.ResponseWriter, request *http.Request) {
+	rw.Header().Set("Content-Type", "text/html")
+	rw.Write(indexHTML)
 }

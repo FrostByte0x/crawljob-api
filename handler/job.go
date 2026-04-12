@@ -81,7 +81,6 @@ func Handle(writer http.ResponseWriter, request *http.Request) {
 		fmt.Fprintf(writer, "Error handling job file: %s", err)
 		return
 	}
-
 	// finish with this
 	writer.WriteHeader(http.StatusCreated) // 201 is the expected request for resource creation in Rest APIs.
 	fmt.Fprintf(writer, "Job successfully received")
