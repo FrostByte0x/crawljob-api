@@ -2,23 +2,27 @@ package main
 
 import (
 	"crawljob-api/handler"
-	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 )
 
 func main() {
-	// Handle the main entry point
+	slog.Info("Starting crawljob-api",
+		"DESTINATION_FOLDER", os.Getenv("DESTINATION_FOLDER"),
+		"CRAWLJOB_FOLDER", os.Getenv("CRAWLJOB_FOLDER"),
+		"ALLOWED_DOMAINS", os.Getenv("ALLOWED_DOMAINS"),
+	)
+
 	http.HandleFunc("/", handler.HandleUI)
-	// Handle /jobs
 	http.HandleFunc("/jobs", handler.Handle)
-	// handle the retrieval of files
 	http.HandleFunc("/api/files", handler.HandleFiles)
-	// serve the file interface
 	http.HandleFunc("/downloads", handler.HandleDownloadUi)
-	// Download files
 	http.HandleFunc("/download", handler.DownloadFiles)
-	// download folders
 	http.HandleFunc("/download/folder", handler.DownloadFolder)
-	fmt.Println("Starting web server on :8080")
-	http.ListenAndServe(":8080", nil)
+
+	slog.Info("Server listening", "addr", ":8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		slog.Error("Server failed", "err", err)
+	}
 }

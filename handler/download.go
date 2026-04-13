@@ -14,11 +14,8 @@ import (
 )
 
 func getDestinationFolder() string {
-	folder := os.Getenv("DESTINATION_FOLDER")
-	if folder == "" {
-		return "/mnt/downloads"
-	}
-	return filepath.Clean(folder)
+	// fix later if needed, but for now we always want this since we run as docker container that mounts this.
+	return "/mnt/downloads"
 }
 
 type FSEntry struct {
@@ -61,7 +58,7 @@ func FormatFileSize(size int64) string {
 func HandleFiles(rw http.ResponseWriter, r *http.Request) {
 	destinationFolder := getDestinationFolder()
 
-	slog.Info("destinationFolder", "value", destinationFolder)
+	slog.Info("File listing request", "remote", r.RemoteAddr, "folder", destinationFolder)
 	// test the access to the directory
 	if _, err := os.Stat(destinationFolder); os.IsNotExist(err) {
 		slog.Warn("DESTINATION_FOLDER cannot be accessed")
@@ -124,7 +121,6 @@ func HandleFiles(rw http.ResponseWriter, r *http.Request) {
 func DownloadFiles(rw http.ResponseWriter, r *http.Request) {
 	destinationFolder := getDestinationFolder()
 
-	slog.Info("File Handler running", "destinationFolder", destinationFolder)
 	// test the access to the directory
 	if _, err := os.Stat(destinationFolder); os.IsNotExist(err) {
 		slog.Warn("DESTINATION_FOLDER cannot be accessed")
@@ -168,7 +164,6 @@ func DownloadFiles(rw http.ResponseWriter, r *http.Request) {
 
 func DownloadFolder(rw http.ResponseWriter, r *http.Request) {
 	destinationFolder := getDestinationFolder()
-	slog.Info("Folder Handler running", "destinationFolder", destinationFolder)
 	// parse the request
 	err := r.ParseForm()
 	if err != nil {
@@ -179,7 +174,7 @@ func DownloadFolder(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	archiveName := r.FormValue("folder")
-	slog.Info("Received request to download folder", "name", archiveName)
+	slog.Info("Received request to download folder", "name", archiveName, "remote", r.RemoteAddr)
 
 	// build the path to the folder
 	FolderPath := filepath.Join(destinationFolder, archiveName)

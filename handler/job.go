@@ -19,7 +19,7 @@ type ValidBody struct {
 func Handle(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != "POST" {
 		writer.WriteHeader(http.StatusMethodNotAllowed) // 405
-		slog.Info("Received wrong method from a client.")
+		slog.Warn("Method not allowed", "method", request.Method, "remote", request.RemoteAddr)
 		fmt.Fprintf(writer, "method not allowed")
 		return
 	}
@@ -56,7 +56,6 @@ func Handle(writer http.ResponseWriter, request *http.Request) {
 
 	// This will be taken from DOCKER configuration
 	destinationFolder := os.Getenv("DESTINATION_FOLDER")
-	slog.Info("destinationFolder", "value", destinationFolder)
 
 	destinationFileJob := os.Getenv("CRAWLJOB_FOLDER")
 	if destinationFileJob == "" {
