@@ -17,6 +17,7 @@ ENV DESTINATION_FOLDER=/mnt/jDownloader/crawljob-api
 ENV CRAWLJOB_FOLDER=/mnt/jDownloader/crawljobs
 ENV ALLOWED_DOMAINS=1fichier.com,mega.nz
 ENV ENABLE_PURGE=false
+ENV PURGE_FILES_AGE_IN_HOURS=24
 
 CMD ["/crawljob-api"]
 

@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func purgeOldFiles(destinationFolder string) {
+func purgeOldFiles(destinationFolder string, ageInHours int) {
 	slog.Info("Purge job activating.")
 	files, err := os.ReadDir(destinationFolder)
 	if err != nil {
@@ -22,7 +22,7 @@ func purgeOldFiles(destinationFolder string) {
 			continue // go to the next file
 		}
 		lastModificationTime := fileInformation.ModTime()
-		if time.Since(lastModificationTime) > time.Hour*24 {
+		if time.Since(lastModificationTime) > time.Hour*time.Duration(ageInHours) {
 			stringTime := lastModificationTime.Format("02-01-2006 15:04")
 			slog.Info(fmt.Sprintf("Removing %s, last modified %s", fileInformation.Name(), stringTime))
 			// Delete the folder and its content
@@ -35,12 +35,12 @@ func purgeOldFiles(destinationFolder string) {
 	slog.Info("Purge job has completed successfully.")
 }
 
-func StartPurgeRoutine(destinationFolder string) {
+func StartPurgeRoutine(destinationFolder string, ageInHours int) {
 	go func() {
 		for {
 			slog.Info("Purge will run in one hour. Exit the program now to avoid file deletion.")
 			time.Sleep(1 * time.Hour)
-			purgeOldFiles(destinationFolder)
+			purgeOldFiles(destinationFolder, ageInHours)
 		}
 	}()
 }
