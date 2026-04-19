@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func getDestinationFolder() string {
+func GetDestinationFolder() string {
 	// fix later if needed, but for now we always want this since we run as docker container that mounts this.
 	return "/mnt/downloads"
 }
@@ -56,13 +56,13 @@ func FormatFileSize(size int64) string {
 	}
 }
 func HandleFiles(rw http.ResponseWriter, r *http.Request) {
-	destinationFolder := getDestinationFolder()
+	destinationFolder := GetDestinationFolder()
 
 	slog.Info("File listing request", "remote", r.RemoteAddr, "folder", destinationFolder)
 	// test the access to the directory
 	if _, err := os.Stat(destinationFolder); os.IsNotExist(err) {
 		slog.Warn("DESTINATION_FOLDER cannot be accessed")
-		rw.WriteHeader(http.StatusForbidden)
+		rw.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(rw, "Unable to load directory %s", destinationFolder)
 		slog.Warn("Unable to load DESTINATION_FOLDER files")
 		return
@@ -119,7 +119,7 @@ func HandleFiles(rw http.ResponseWriter, r *http.Request) {
 }
 
 func DownloadFiles(rw http.ResponseWriter, r *http.Request) {
-	destinationFolder := getDestinationFolder()
+	destinationFolder := GetDestinationFolder()
 
 	// test the access to the directory
 	if _, err := os.Stat(destinationFolder); os.IsNotExist(err) {
@@ -163,7 +163,7 @@ func DownloadFiles(rw http.ResponseWriter, r *http.Request) {
 }
 
 func DownloadFolder(rw http.ResponseWriter, r *http.Request) {
-	destinationFolder := getDestinationFolder()
+	destinationFolder := GetDestinationFolder()
 	// parse the request
 	err := r.ParseForm()
 	if err != nil {

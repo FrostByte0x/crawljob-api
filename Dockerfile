@@ -16,6 +16,7 @@ COPY --from=builder /app/crawljob-api /crawljob-api
 ENV DESTINATION_FOLDER=/mnt/jDownloader/crawljob-api
 ENV CRAWLJOB_FOLDER=/mnt/jDownloader/crawljobs
 ENV ALLOWED_DOMAINS=1fichier.com,mega.nz
+ENV ENABLE_PURGE=false
 
 CMD ["/crawljob-api"]
 
