@@ -35,7 +35,9 @@ func purgeOldFiles(destinationFolder string, ageInHours int) {
 	slog.Info("Purge job has completed successfully.")
 }
 
-func StartPurgeRoutine(destinationFolder string, ageInHours int) {
+const destinationFolder = "/mnt/downloads"
+
+func StartPurgeRoutine(ageInHours int) {
 	go func() {
 		for {
 			slog.Info("Purge will run in one hour. Exit the program now to avoid file deletion.")

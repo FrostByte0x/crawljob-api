@@ -11,13 +11,11 @@ import (
 
 func main() {
 	slog.Info("Starting crawljob-api",
-		"DESTINATION_FOLDER", os.Getenv("DESTINATION_FOLDER"),
 		"CRAWLJOB_FOLDER", os.Getenv("CRAWLJOB_FOLDER"),
 		"ALLOWED_DOMAINS", os.Getenv("ALLOWED_DOMAINS"),
 		"ENABLE_PURGE", os.Getenv("ENABLE_PURGE"),
 		"PURGE_FILES_AGE_IN_HOURS", os.Getenv("PURGE_FILES_AGE_IN_HOURS"),
 	)
-	// start the purge job, use the same destinationFolder retrieved in the handler package
 	enablePurge, err := strconv.ParseBool(os.Getenv("ENABLE_PURGE"))
 	if err != nil {
 		slog.Warn(err.Error())
@@ -28,7 +26,7 @@ func main() {
 		if value, err := strconv.Atoi(os.Getenv("PURGE_FILES_AGE_IN_HOURS")); err == nil {
 			purgeMaximumFileAge = value
 		}
-		jobs.StartPurgeRoutine(handler.GetDestinationFolder(), purgeMaximumFileAge)
+		jobs.StartPurgeRoutine(purgeMaximumFileAge)
 	}
 	// register handlers
 	http.HandleFunc("/", handler.HandleUI)

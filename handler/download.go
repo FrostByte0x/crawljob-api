@@ -13,10 +13,7 @@ import (
 	"strings"
 )
 
-func GetDestinationFolder() string {
-	// fix later if needed, but for now we always want this since we run as docker container that mounts this.
-	return "/mnt/downloads"
-}
+const destinationFolder = "/mnt/downloads"
 
 type FSEntry struct {
 	Name      string    `json:"name"`
@@ -56,15 +53,13 @@ func FormatFileSize(size int64) string {
 	}
 }
 func HandleFiles(rw http.ResponseWriter, r *http.Request) {
-	destinationFolder := GetDestinationFolder()
-
 	slog.Info("File listing request", "remote", r.RemoteAddr, "folder", destinationFolder)
 	// test the access to the directory
 	if _, err := os.Stat(destinationFolder); os.IsNotExist(err) {
-		slog.Warn("DESTINATION_FOLDER cannot be accessed")
+		slog.Warn("downloads folder cannot be accessed")
 		rw.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(rw, "Unable to load directory %s", destinationFolder)
-		slog.Warn("Unable to load DESTINATION_FOLDER files")
+		slog.Warn("Unable to load downloads folder files")
 		return
 	}
 	// Create a map to store folders and their files in it.
@@ -119,14 +114,12 @@ func HandleFiles(rw http.ResponseWriter, r *http.Request) {
 }
 
 func DownloadFiles(rw http.ResponseWriter, r *http.Request) {
-	destinationFolder := GetDestinationFolder()
-
 	// test the access to the directory
 	if _, err := os.Stat(destinationFolder); os.IsNotExist(err) {
-		slog.Warn("DESTINATION_FOLDER cannot be accessed")
+		slog.Warn("downloads folder cannot be accessed")
 		rw.WriteHeader(http.StatusForbidden)
 		fmt.Fprintf(rw, "Unable to load directory %s", destinationFolder)
-		slog.Warn("Unable to load DESTINATION_FOLDER files")
+		slog.Warn("Unable to load downloads folder files")
 		return
 	}
 	// This segment handles the downloads of files depending on the http request received. If not, serve the web UI
@@ -163,7 +156,6 @@ func DownloadFiles(rw http.ResponseWriter, r *http.Request) {
 }
 
 func DownloadFolder(rw http.ResponseWriter, r *http.Request) {
-	destinationFolder := GetDestinationFolder()
 	// parse the request
 	err := r.ParseForm()
 	if err != nil {

@@ -29,8 +29,9 @@ HTML and CSS courtesy of Claude; the purpose of this project is to write the API
 ```bash
 docker run -d \
   -p 8080:8080 \
-  -e DESTINATION_FOLDER=/mnt/downloads \
   -e CRAWLJOB_FOLDER=/mnt/crawljobs \
+  -e ENABLE_PURGE=true \
+  -e PURGE_FILES_AGE_IN_HOURS=48 \
   -v /your/download/path:/mnt/downloads \
   -v /your/crawljob/path:/mnt/crawljobs \
   ghcr.io/frostbyte0x/crawljob-api:latest
@@ -50,9 +51,10 @@ go run main.go
 
 | Variable | Description | Default |
 |---|---|---|
-| `DESTINATION_FOLDER` | Download destination folder | `.` (current dir) |
 | `CRAWLJOB_FOLDER` | Folder watched by JDownloader | `.` (current dir) |
-| `ALLOWED_DOMAINS` | Allowed download domains | 1fichier.com,mega.nz | 
+| `ALLOWED_DOMAINS` | Allowed download domains | 1fichier.com,mega.nz |
+| `ENABLE_PURGE` | Enable the background purge job | `false` |
+| `PURGE_FILES_AGE_IN_HOURS` | Delete files older than N hours (requires `ENABLE_PURGE=true`) | `24` |
 ---
 
 ## API Reference
@@ -129,6 +131,26 @@ Stream a file from the download folder to the client.
 
 ---
 
+### `GET /download/folder?folder=<name>`
+
+Stream a folder as a `.zip` archive to the client. Files are stored uncompressed (zip Store method).
+
+**Query Parameters**
+
+| Parameter | Description |
+|---|---|
+| `folder` | Name of the folder to download (must be within the download directory) |
+
+**Responses**
+
+| Code | Description |
+|---|---|
+| `200 OK` | Folder streamed as a `.zip` attachment |
+| `403 Forbidden` | Path traversal attempt detected |
+| `404 Not Found` | Folder does not exist |
+
+---
+
 ## Allowed Domains
 This can be changed in the Dockerfile configuration using ALLOWED_DOMAINS
 
@@ -149,8 +171,10 @@ crawljob-api/
 │   ├── job.go          # HTTP handler
 │   ├── download_ui.go  # HTTP handler for /downloads (web interface)
 │   ├── validator.go    # URL validation
-│   ├── download.go     # API that returns a json array of files in the download directory
+│   ├── download.go     # File listing, file download, and folder zip download
 │   └── ui.go           # HTTP handler for / (web interface)
+├── jobs/
+│   └── purge.go        # Background purge job (deletes old files)
 ├── model/
 │   ├── crawljob.go     # CrawlJob model + file generation
 │   └── utils.go        # Helpers

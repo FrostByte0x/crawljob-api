@@ -54,9 +54,6 @@ func Handle(writer http.ResponseWriter, request *http.Request) {
 
 	// Start of main processing for jobs
 
-	// This will be taken from DOCKER configuration
-	destinationFolder := os.Getenv("DESTINATION_FOLDER")
-
 	destinationFileJob := os.Getenv("CRAWLJOB_FOLDER")
 	if destinationFileJob == "" {
 		slog.Warn("CRAWLJOB_FOLDER is not set, using fallback to current directory")
