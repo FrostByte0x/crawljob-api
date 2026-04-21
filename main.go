@@ -11,6 +11,7 @@ import (
 
 func main() {
 	slog.Info("Starting crawljob-api",
+		"DESTINATION_FOLDER", os.Getenv("ENV DESTINATION_FOLDER"),
 		"CRAWLJOB_FOLDER", os.Getenv("CRAWLJOB_FOLDER"),
 		"ALLOWED_DOMAINS", os.Getenv("ALLOWED_DOMAINS"),
 		"ENABLE_PURGE", os.Getenv("ENABLE_PURGE"),

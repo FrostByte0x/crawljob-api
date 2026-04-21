@@ -53,7 +53,7 @@ func Handle(writer http.ResponseWriter, request *http.Request) {
 	slog.Info("Received a valid request from", "IP Addr", request.RemoteAddr, "url", requestUrl.Url)
 
 	// Start of main processing for jobs
-
+	// Check destination for the job file
 	destinationFileJob := os.Getenv("CRAWLJOB_FOLDER")
 	if destinationFileJob == "" {
 		slog.Warn("CRAWLJOB_FOLDER is not set, using fallback to current directory")
@@ -61,6 +61,11 @@ func Handle(writer http.ResponseWriter, request *http.Request) {
 	} else if _, err := os.Stat(destinationFileJob); os.IsNotExist(err) {
 		slog.Warn("CRAWLJOB_FOLDER does not exist, using fallback to current directory")
 		destinationFileJob = "." // current running directory
+	}
+	// Check the destination for the download directory
+	destinationFolder := os.Getenv("DESTINATION_FOLDER")
+	if destinationFolder == "" {
+		slog.Warn("DESTINATION_FOLDER is not set")
 	}
 	// Generate crawl job file
 	err = model.GenerateJobFile(requestUrl.Url, destinationFolder, destinationFileJob)
