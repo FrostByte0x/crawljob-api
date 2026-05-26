@@ -46,7 +46,7 @@ func Handle(writer http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		writer.WriteHeader(http.StatusBadRequest)
 		slog.Info("Received invalid URL from a client", "url", requestUrl.Url)
-		fmt.Fprintf(writer, "Invalid URL received %s", err)
+		fmt.Fprintf(writer, "Error during URL validation: %s", err)
 		return
 	}
 	// The following code is the client return + http/201

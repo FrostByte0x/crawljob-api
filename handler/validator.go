@@ -42,7 +42,7 @@ func Validate1FichierLink(url string) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Requested URL is not valid, code: %d", resp.StatusCode)
+		return fmt.Errorf("Link is likely dead.")
 	}
 	return nil
 }
