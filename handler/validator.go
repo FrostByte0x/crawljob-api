@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"os"
 	"slices"
@@ -25,6 +26,23 @@ func ValidateUrl(requestedUrl string) error {
 	}
 	if !slices.Contains(allowedDomains, parsedUrl.Host) {
 		return fmt.Errorf("Requested Host is not in the allowed domains. Contact the server owner to allow the domain!")
+	}
+	if parsedUrl.Host == "1fichier.com" {
+		if err := Validate1FichierLink(parsedUrl.String()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func Validate1FichierLink(url string) error {
+	resp, err := http.Head(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Requested URL is not valid, code: %d", resp.StatusCode)
 	}
 	return nil
 }
